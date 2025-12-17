@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Path,Depends,HTTPException
+from fastapi import APIRouter,Path,Depends,HTTPException,Query
 from .schemas import *
 from .models import TaskModel
 from sqlalchemy.orm import Session
@@ -8,16 +8,24 @@ from fastapi.responses import JSONResponse
 router=APIRouter(tags=["tasks"],prefix="/todo")
 
 @router.get('/tasks',response_model=List[TaskResponseSchema])
-def retrieve_tasks_list(db : Session = Depends(get_db)):
-    result=db.query(TaskModel).all()
-    return result
+def retrieve_tasks_list(
+        completed: bool = Query(None,description="filter tasks on whether they are completed or not"),
+        limit: int = Query(10,gt=0,le=50),
+        offset: int = Query(0,ge=0),
+        db : Session = Depends(get_db)):
+    query=db.query(TaskModel)
+    if completed is not None:
+        query=query.filter_by(is_completed=completed)
+    return query.limit(limit).offset(offset).all()
 
 @router.get('/tasks/{task_id}',response_model=TaskResponseSchema)
-def retrieve_tasks_detail(task_id : int = Path(..., gt=0),db : Session = Depends(get_db)):
-    result= db.query(TaskModel).filter_by(id=task_id).first()
-    if not result:
+def retrieve_tasks_detail(
+        task_id : int = Path(..., gt=0),
+        db : Session = Depends(get_db)):
+    query= db.query(TaskModel).filter_by(id=task_id).one_or_none()
+    if not query:
         raise HTTPException(status_code=404,detail="Task not found")
-    return result
+    return query
 
 @router.post('/tasks')
 def create_task(request : TaskCreateSchema,db : Session = Depends(get_db)):
