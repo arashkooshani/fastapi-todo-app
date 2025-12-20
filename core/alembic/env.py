@@ -9,7 +9,7 @@ from alembic import context
 from core.database import Base
 from core.config import settings
 from tasks.models import TaskModel
-
+from users.models import UserModel
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
 # this is the Alembic Config object, which provides
@@ -25,6 +25,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+from tasks.models import *
+from users.models import *
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
